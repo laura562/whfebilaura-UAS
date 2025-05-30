@@ -1,117 +1,144 @@
 import 'package:flutter/material.dart';
 import 'package:whazlansaja/data_saya.dart';
 
-class PesanScreen extends StatelessWidget {
-  const PesanScreen({super.key});
+class PesanScreen extends StatefulWidget {
+  final Map<String, dynamic> dosenData;
+
+  const PesanScreen({super.key, required this.dosenData});
+
+  @override
+  State<PesanScreen> createState() => _PesanScreenState();
+}
+
+class _PesanScreenState extends State<PesanScreen> {
+  final TextEditingController _messageController = TextEditingController();
+  final List<Map<String, dynamic>> _messages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _messages
+        .addAll(List<Map<String, dynamic>>.from(widget.dosenData['messages']));
+  }
+
+  void _sendMessage(String text) {
+    if (text.isNotEmpty) {
+      final newMessage = {"from": 0, "message": text};
+      setState(() {
+        _messages.add(newMessage);
+        _messageController.clear();
+      });
+
+      // Kembalikan pesan baru ke BerandaScreen
+      Navigator.pop(context, newMessage);
+    }
+  }
+
+  Widget _buildChatBubble(BuildContext context, Map<String, dynamic> message) {
+    final bool isMe = message['from'] == 0;
+
+    return Align(
+      alignment: isMe ? Alignment.topRight : Alignment.topLeft,
+      child: Container(
+        padding: const EdgeInsets.all(8.0),
+        margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+        decoration: BoxDecoration(
+          color: isMe ? Colors.blue.shade100 : Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Text(
+          message['message'],
+          style: TextStyle(
+            color: isMe ? Colors.blue.shade800 : Colors.black87,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Scaffold(
       appBar: AppBar(
-        leadingWidth: 29,
-        elevation: 2,
-        title: const ListTile(
-          contentPadding: EdgeInsets.all(0),
-          leading: CircleAvatar(
-            backgroundImage:
-                AssetImage('assets/gambar_dosen/Azlan, S.Kom., M.Kom.jpg'),
-            radius: 16,
-          ),
-          title: Text(
-            'Azlan, S.Kom., M.Kom',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text('06.30'),
+        title: Row(
+          children: [
+            CircleAvatar(
+              backgroundImage: AssetImage(widget.dosenData['avatar']),
+              radius: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.dosenData['full_name'],
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const Text(
+                    'Online',
+                    style: TextStyle(fontSize: 12, color: Colors.green),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.video_call)),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.call)),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert)),
+          IconButton(icon: const Icon(Icons.videocam), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.call), onPressed: () {}),
+          PopupMenuButton<String>(
+              onSelected: (value) {},
+              itemBuilder: (BuildContext context) {
+                return [
+                  const PopupMenuItem<String>(
+                      value: 'view_contact', child: Text('Lihat Kontak')),
+                  const PopupMenuItem<String>(
+                      value: 'media', child: Text('Media, Tautan, Dokumen')),
+                  const PopupMenuItem<String>(
+                      value: 'search', child: Text('Cari')),
+                  const PopupMenuItem<String>(
+                      value: 'mute', child: Text('Bisukan Notifikasi')),
+                  const PopupMenuItem<String>(
+                      value: 'wallpaper', child: Text('Wallpaper')),
+                  const PopupMenuItem<String>(
+                      value: 'more', child: Text('Lainnya')),
+                ];
+              }),
         ],
       ),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
             child: ListView.builder(
-              itemCount: 5,
+              itemCount: _messages.length,
               itemBuilder: (context, index) {
-                final isDosen = index % 2 == 0;
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 12,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: isDosen
-                        ? MainAxisAlignment.start
-                        : MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (isDosen)
-                        const CircleAvatar(
-                          backgroundImage: AssetImage(
-                              'assets/gambar_dosen/Azlan, S.Kom., M.Kom.jpg'),
-                          radius: 14,
-                        ),
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          margin: const EdgeInsets.symmetric(horizontal: 10),
-                          constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width * 0.65,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDosen
-                                ? colorScheme.tertiary
-                                : colorScheme.primary,
-                            borderRadius: BorderRadius.only(
-                              topLeft: const Radius.circular(12),
-                              topRight: const Radius.circular(12),
-                              bottomLeft: Radius.circular(isDosen ? 0 : 12),
-                              bottomRight: Radius.circular(isDosen ? 12 : 0),
-                            ),
-                          ),
-                          child: Text(
-                            'index ke-$index ini adalah contoh chat. Silahkan ambil data chat dari file json.',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: isDosen
-                                  ? colorScheme.onTertiary
-                                  : colorScheme.onPrimary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (!isDosen)
-                        CircleAvatar(
-                          backgroundImage: AssetImage(
-                            DataSaya.gambar,
-                          ),
-                          radius: 14,
-                        ),
-                    ],
-                  ),
-                );
+                return _buildChatBubble(context, _messages[index]);
               },
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextFormField(
-              minLines: 1,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.emoji_emotions),
-                suffixIcon: Icon(Icons.send),
-                hintText: 'Ketikkan pesan',
-                filled: true,
-              ),
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    decoration: const InputDecoration(
+                      hintText: 'Ketik pesan...',
+                      border: OutlineInputBorder(),
+                    ),
+                    onSubmitted: _sendMessage,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: () {
+                    _sendMessage(_messageController.text);
+                  },
+                ),
+              ],
             ),
           ),
         ],
